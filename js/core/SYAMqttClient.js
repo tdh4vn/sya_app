@@ -1,6 +1,6 @@
 import { Client, Message } from 'react-native-paho-mqtt';
 import { MQTT_URL } from '../constains/config';
-import { NODES_RECEIVE_DATA } from '../actions/listDevices';
+import { NODES_RECEIVE_DATA, NODE_RECEIVE_CONTROL } from '../actions/listDevices';
 
 let instance = null;
 
@@ -26,18 +26,28 @@ export default class SYAMQTTClient {
     this.client.on('messageReceived', (message) => {
       const data = message.payloadString.split(' ');
       if (data[0] !== message.destinationName && this.dispatch) {
-        this.dispatch({
-          type: NODES_RECEIVE_DATA,
-          payload: {
-            nodeId: message.destinationName,
-            data: {
-              temp: Number(data[0]),
-              hum: Number(data[1]),
-              pm2: Number(data[2]),
-              lastUpdated: new Date().toISOString(),
+        if (data.length === 1) {
+          this.dispatch({
+            type: NODE_RECEIVE_CONTROL,
+            payload: {
+              nodeId: message.destinationName.split('/')[0],
+              state: data[0] === 'on',
             },
-          },
-        });
+          });
+        } else {
+          this.dispatch({
+            type: NODES_RECEIVE_DATA,
+            payload: {
+              nodeId: message.destinationName,
+              data: {
+                temp: Number(data[0]),
+                hum: Number(data[1]),
+                pm2: Number(data[2]),
+                lastUpdated: new Date().toISOString(),
+              },
+            },
+          });
+        }
       }
     });
 
@@ -70,12 +80,19 @@ export default class SYAMQTTClient {
   }
 
   subscribeNode = (nodeId) => {
+    console.log(nodeId);
     if (this.isSubcribed) {
       if (this.nodeSubcribeList.indexOf(nodeId) > -1) {
         this.client.subscribe(nodeId);
       }
     }
     this.nodeSubcribeList.push(nodeId);
+  }
+
+  publishMessage = (topic, payload) => {
+    const message = new Message(payload);
+    message.destinationName = topic;
+    this.client.send(message);
   }
 
   setDispatch = (dispatch) => {

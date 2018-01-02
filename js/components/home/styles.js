@@ -18,4 +18,14 @@ export default {
   mt: {
     marginTop: 18,
   },
+  popupDialog: {
+    dialogContentView: {
+      flex: 1,
+      width: 300,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 99999,
+    },
+    zIndex: 99999,
+  },
 };

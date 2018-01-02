@@ -2,6 +2,9 @@ import {
   LOGGING,
   LOGIN_SUCCESS,
   LOGIN_FAIL,
+  REGISTING,
+  REGISTER_SUCCESS,
+  REGISTER_FAIL,
 } from '../actions/user';
 
 const initialState = {
@@ -14,6 +17,7 @@ const initialState = {
   email: '',
   name: '',
   _id: '',
+  registerStatus: 0,
 };
 
 export default function (state = initialState, action) {
@@ -44,6 +48,28 @@ export default function (state = initialState, action) {
         success: false,
       };
     }
+
+    case REGISTING: {
+      return {
+        msg: 'Đang đăng kí',
+        registerStatus: 1,
+      };
+    }
+
+    case REGISTER_SUCCESS: {
+      return {
+        msg: '',
+        registerStatus: 2,
+      };
+    }
+
+    case REGISTER_FAIL: {
+      return {
+        msg: 'Có lỗi xảy ra, thử lại sau',
+        registerStatus: 3,
+      };
+    }
+
     default:
       return state;
   }

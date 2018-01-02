@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Image, AsyncStorage } from 'react-native';
+import { Image, AsyncStorage, TouchableOpacity } from 'react-native';
 import { connect } from 'react-redux';
 import PopupDialog, { DialogTitle, DialogButton } from 'react-native-popup-dialog';
 import {
@@ -11,7 +11,7 @@ import {
   View,
   Text,
 } from 'native-base';
-import { login } from '../../actions/user';
+import { login, register } from '../../actions/user';
 import styles from './styles';
 
 const background = require('../../../images/logo_sya.png');
@@ -35,10 +35,21 @@ class Login extends Component {
       successEmail: false,
       successPassword: false,
       isValidate: false,
+      registerAccount: '',
+      registerEmail: '',
+      registerPassword: '',
     };
 
     AsyncStorage.getItem('jwt', (err, result) => {
       if (result) {
+        this.props.dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: {
+            success: true,
+            token: result,
+            info: {},
+          },
+        });
         this.props.navigation.navigate('Home');
       }
     });
@@ -89,12 +100,42 @@ class Login extends Component {
     }
   }
 
+  registerEmailChange = (txt) => {
+    this.setState({
+      registerEmail: txt,
+    });
+  }
+
+  registerPasswordChange = (txt) => {
+    this.setState({
+      registerPassword: txt,
+    });
+  }
+
+  registerAccountChange = (txt) => {
+    this.setState({
+      registerAccount: txt,
+    });
+  }
+
+  openRegisterDialog = () => {
+    this.registerDialog.show();
+  }
+
   handleLogin = () => {
     const { dispatch } = this.props;
     const { email, password } = this.state;
     login(email, password)(dispatch);
     this.popupDialog.show();
   }
+
+  handleRegister = () => {
+    const { dispatch } = this.props;
+    const { registerEmail, registerAccount, registerPassword } = this.state;
+    register(registerEmail, registerAccount, registerPassword)(dispatch);
+    this.popupDialog.show();
+  }
+
   render() {
     const {
       email,
@@ -104,6 +145,9 @@ class Login extends Component {
       errorPassword,
       successPassword,
       isValidate,
+      registerEmail,
+      registerPassword,
+      registerAccount,
     } = this.state;
 
     const {
@@ -134,6 +178,7 @@ class Login extends Component {
               <Text>{msg}</Text>
             </View>
           </PopupDialog>
+
           <Image
             source={background}
             style={styles.logo}
@@ -182,9 +227,66 @@ class Login extends Component {
             style={styles.registerText}
           >
             <Text style={{ fontSize: 12, fontWeight: '200' }}>Bạn chưa có tài khoản?</Text>
-            <Text style={{ fontSize: 12, fontWeight: 'bold' }}> Đăng ký</Text>
+            <TouchableOpacity onPress={this.openRegisterDialog}>
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: 'bold' }}>Đăng ký</Text>
+              </View>
+            </TouchableOpacity>
+
           </View>
         </View>
+        <PopupDialog
+          style={styles.popupDialog}
+          dialogTitle={<DialogTitle title="Đăng kí" />}
+          width={300}
+          height={300}
+          ref={(popupDialog) => { this.registerDialog = popupDialog; }}
+          actions={[
+            <DialogButton
+              text="Tạo tài khoản"
+              onPress={() => {
+                this.registerDialog.dismiss();
+                this.handleRegister();
+              }}
+              key="button-register-register"
+            />,
+          ]}
+        >
+          <View style={styles.popupDialog.dialogContentView}>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Email"
+                value={registerEmail}
+                onChangeText={this.registerEmailChange}
+              />
+            </Item>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Tên tài khoản"
+                value={registerAccount}
+                onChangeText={this.registerAccountChange}
+              />
+            </Item>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Mật khẩu"
+                value={registerPassword}
+                secureTextEntry
+                onChangeText={this.registerPasswordChange}
+              />
+            </Item>
+          </View>
+
+        </PopupDialog>
       </Container>
     );
   }

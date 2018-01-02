@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { connect } from 'react-redux';
 import { DrawerNavigator, NavigationActions } from 'react-navigation';
+import PopupDialog, { DialogTitle, DialogButton } from 'react-native-popup-dialog';
+import { addNode } from '../../actions/listDevices';
 import {
   Container,
   Header,
@@ -15,6 +17,11 @@ import {
   Right,
   Footer,
   FooterTab,
+  CheckBox,
+  ListItem,
+  Item,
+  Input,
+  View,
 } from 'native-base';
 import Map from './Map';
 import NodeControl from '../NodeControl';
@@ -39,6 +46,7 @@ class Home extends Component {
     setIndex: React.PropTypes.func,
     openDrawer: React.PropTypes.func,
     dispatch: React.PropTypes.func,
+    user: React.PropTypes.object,
   };
 
   constructor(props) {
@@ -46,7 +54,40 @@ class Home extends Component {
     SYAMQTTClient.getInstance().setDispatch(props.dispatch);
     this.state = {
       activeTab: 0,
+      latitude: 0,
+      longitude: 0,
+      error: null,
+      id: '',
+      password: '',
+      name: '',
+      description: '',
+      isControlDevice: false,
     };
+  }
+
+  componentDidMount() {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.setState({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+        });
+      }, (error) => { console.log(error); this.setState({ error: error.message }); }
+    );
+  }
+
+  handleAddNode = () => {
+    const { user, dispatch } = this.props;
+    const {
+      id,
+      password,
+      name,
+      description,
+      longitude,
+      latitude,
+    } = this.state;
+    addNode(user.token, id, password, name, description, latitude, longitude)(dispatch);
   }
 
   newPage(index) {
@@ -55,9 +96,70 @@ class Home extends Component {
   }
 
   render() {
-    const { activeTab } = this.state;
+    const { activeTab, id, password, name, description } = this.state;
     return (
       <Container style={styles.container}>
+        <PopupDialog
+          style={styles.popupDialog}
+          dialogTitle={<DialogTitle title="Thêm thiết bị" />}
+          width={300}
+          height={300}
+          ref={(popupDialog) => { this.addNodeDialog = popupDialog; }}
+          actions={[
+            <DialogButton
+              text="Thêm"
+              onPress={() => {
+                this.addNodeDialog.dismiss();
+                this.handleAddNode();
+              }}
+              key="button-register-register"
+            />,
+          ]}
+        >
+          <View style={styles.popupDialog.dialogContentView}>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="ID"
+                value={id}
+                onChangeText={(txt) => { this.setState({ id: txt }); }}
+              />
+            </Item>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Mật khẩu"
+                value={password}
+                secureTextEntry
+                onChangeText={(txt) => { this.setState({ password: txt }); }}
+              />
+            </Item>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Tên"
+                value={name}
+                onChangeText={(txt) => { this.setState({ name: txt }); }}
+              />
+            </Item>
+            <Item>
+              <Input
+                style={{
+                  width: 300,
+                }}
+                placeholder="Mô tả"
+                value={description}
+                onChangeText={(txt) => { this.setState({ description: txt }); }}
+              />
+            </Item>
+          </View>
+        </PopupDialog>
         <Header >
           <Left>
             <Button
@@ -74,6 +176,12 @@ class Home extends Component {
             <Button
               transparent
               onPress={() => { this.props.navigation.navigate('FollowNode'); }}
+            >
+              <Icon active ios="ios-barcode-outline" android="md-barcode" />
+            </Button>
+            <Button
+              transparent
+              onPress={() => { this.addNodeDialog.show(); }}
             >
               <Icon active ios="ios-add" android="md-add" />
             </Button>
@@ -103,7 +211,7 @@ class Home extends Component {
               <Text>Bản đồ</Text>
             </Button>
             <Button
-              active={activeTab === 1}
+              active={activeTab === 2}
               vertical
               onPress={() => { this.setState({ activeTab: 2 }); }}
             >
@@ -123,8 +231,13 @@ function bindAction(dispatch) {
     openDrawer: () => dispatch(openDrawer()),
   };
 }
+// const mapDispatchToProps = dispatch => ({
+//   dispatch,
+// });
 const mapStateToProps = state => ({
   name: state.user.name,
+  flag: state.listDevices.flag,
+  user: state.user,
 });
 
 const HomeSwagger = connect(mapStateToProps, bindAction)(Home);

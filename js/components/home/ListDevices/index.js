@@ -41,11 +41,12 @@ class ListDevices extends Component {
     nodes: PropTypes.object,
     dispatch: PropTypes.func,
     navigation: PropTypes.object,
+    user: PropTypes.object,
   };
 
   componentWillMount = () => {
-    const { dispatch } = this.props;
-    getNodes()(dispatch);
+    const { dispatch, user } = this.props;
+    getNodes(user.token)(dispatch);
   }
 
   onItemClick = (item) => {
@@ -57,7 +58,7 @@ class ListDevices extends Component {
     const { data } = this.props.nodes;
     return (
       <View>
-        {data.map((item, idx) => (
+        {data && data.map((item, idx) => (
           <Card key={idx}>
             <CardItem button onPress={() => { this.onItemClick(item, idx); }}>
               <Left>
@@ -88,6 +89,7 @@ const mapDispatchToProps = dispatch => ({
 const mapStateToProps = state => ({
   nodes: state.listDevices.nodes,
   flag: state.listDevices.flag,
+  user: state.user,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ListDevices);

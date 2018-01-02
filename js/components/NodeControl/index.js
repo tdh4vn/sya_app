@@ -18,6 +18,8 @@ import {
   Thumbnail,
   Switch,
 } from 'native-base';
+import { getOwnerNodes } from '../../actions/listDevices';
+import SYAMQTTClient from '../../core/SYAMqttClient';
 
 const oAmTuongJPG = require('../../../images/o_am_tuong.png');
 
@@ -38,36 +40,36 @@ class NodeControl extends Component {
 
   componentWillMount = () => {
     const { dispatch } = this.props;
+    getOwnerNodes(this.props.user.token)(dispatch);
+    getOwnerNodes(this.props.user.token)(dispatch);
   }
 
-  onChangeSwitch = (value) => {
-    this.setState({
-      value,
-    });
+  onChangeSwitch = (nodeId, value) => {
+    SYAMQTTClient.getInstance().publishMessage(`${nodeId}/control`, value ? '0' : '1');
   }
 
   render() {
+    const { nodes } = this.props;
     return (
       <View>
-        <Card>
-          <CardItem>
-            <Left>
-              <Image source={oAmTuongJPG} style={{ width: 80, height: 80 }} />
-              <Body>
-                <Text>Ổ cắm âm tường</Text>
-                <Text note>Quạt phòng khách</Text>
-              </Body>
-            </Left>
-            <Right>
-              <View style={{ alignSelf: 'flex-end' }}>
-                {/* {item.now.temp > 0 ? <Text>{`Nhiệt độ: ${item.now.temp} °C`}</Text> : null}
-                    {item.now.hum > 0 ? <Text>{`Độ ẩm: ${item.now.hum} %`}</Text> : null}
-                    <Text>{`AQI: ${item.now.pm2}`}</Text> */}
-                <Switch value={this.state.value} onValueChange={this.onChangeSwitch} />
-              </View>
-            </Right>
-          </CardItem>
-        </Card>
+        {nodes && nodes.map((node, idx) => (
+          <Card key={idx}>
+            <CardItem>
+              <Left>
+                <Image source={oAmTuongJPG} style={{ width: 80, height: 80 }} />
+                <Body>
+                  <Text>{node.name}</Text>
+                  <Text note>{node.description}</Text>
+                </Body>
+              </Left>
+              <Right>
+                <View style={{ alignSelf: 'flex-end' }}>
+                  <Switch value={node.currentState} onValueChange={(value) => { this.onChangeSwitch(node._id, value); }} />
+                </View>
+              </Right>
+            </CardItem>
+          </Card>
+        ))}
       </View>
     );
   }
@@ -77,8 +79,9 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const mapStateToProps = state => ({
-  nodes: state.listDevices.nodes,
+  nodes: state.listDevices.ownerNodes,
   flag: state.listDevices.flag,
+  user: state.user,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(NodeControl);

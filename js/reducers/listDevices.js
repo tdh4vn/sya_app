@@ -12,6 +12,13 @@ import {
   CHART_DATA_DAILY_LOADING,
   CHART_DATA_DAILY_LOAD_SUCCESS,
   CHART_DATA_DAILY_LOAD_FAIL,
+  NODES_OWNER_LOADING,
+  NODES_OWNER_LOAD_FAIL,
+  NODES_OWNER_LOAD_SUCCESS,
+  NODE_RECEIVE_CONTROL,
+  ADD_NODE_SUCCESS_ACTION,
+  ADD_NODE_FAIL_ACTION,
+  ADD_NODE_ACTION,
 } from '../actions/listDevices';
 
 const initialState = {
@@ -19,6 +26,8 @@ const initialState = {
     data: [],
     loading: false,
   },
+  ownerNodes: [],
+  controlNodeState: [],
   flag: false,
   nodeIdSelected: '',
   tempHourChartData: [],
@@ -57,6 +66,39 @@ export default function (state = initialState, action) {
         },
       };
     }
+    case NODES_OWNER_LOADING: {
+      return {
+        ...state,
+        flag: !state.flag,
+      };
+    }
+    case NODES_OWNER_LOAD_FAIL: {
+      return {
+        ...state,
+        flag: !state.flag,
+      };
+    }
+    case NODES_OWNER_LOAD_SUCCESS: {
+      return {
+        ...state,
+        ownerNodes: action.payload,
+      };
+    }
+    case ADD_NODE_SUCCESS_ACTION: {
+      const payload = action.payload;
+      const newState = Object.assign({}, state);
+      newState.nodes.data.push(payload);
+      return {
+        ...newState,
+        flag: !newState.flag,
+      };
+    }
+    case ADD_NODE_FAIL_ACTION: {
+      return state;
+    }
+    case ADD_NODE_ACTION: {
+      return state;
+    }
     case NODES_RECEIVE_DATA: {
       const payload = action.payload;
       const newState = Object.assign({}, state);
@@ -71,6 +113,27 @@ export default function (state = initialState, action) {
             now: payload.data,
           };
           newState.nodes.data[idx] = newNode;
+        }
+      });
+      return {
+        ...newState,
+        flag: !newState.flag,
+      };
+    }
+    case NODE_RECEIVE_CONTROL: {
+      const payload = action.payload;
+      const newState = Object.assign({}, state);
+      newState.ownerNodes.forEach((node, idx) => {
+        if (node._id === payload.nodeId) {
+          const newNode = {
+            name: node.name,
+            _id: node._id,
+            description: node.description,
+            currentState: payload.state,
+            current_location: node.currentLocation,
+            isPrivate: node.isPrivate,
+          };
+          newState.ownerNodes[idx] = newNode;
         }
       });
       return {
